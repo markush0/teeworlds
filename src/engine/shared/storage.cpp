@@ -72,6 +72,10 @@ public:
 					fs_makedir(GetPath(TYPE_SAVE, "downloadedmaps", aPath, sizeof(aPath)));
 					fs_makedir(GetPath(TYPE_SAVE, "skins", aPath, sizeof(aPath)));
 				}
+				if(StorageType == STORAGETYPE_SERVER)
+				{
+					fs_makedir(GetPath(TYPE_SAVE, "records", aPath, sizeof(aPath)));
+				}
 				fs_makedir(GetPath(TYPE_SAVE, "dumps", aPath, sizeof(aPath)));
 				fs_makedir(GetPath(TYPE_SAVE, "demos", aPath, sizeof(aPath)));
 				fs_makedir(GetPath(TYPE_SAVE, "demos/auto", aPath, sizeof(aPath)));

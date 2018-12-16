@@ -12,8 +12,13 @@ class CCollision
 	int m_Height;
 	class CLayers *m_pLayers;
 
+	bool m_MainTiles;
+	bool m_StopTiles;
+
 	bool IsTileSolid(int x, int y) const;
 	int GetTile(int x, int y) const;
+
+	bool IsRaceTile(int TilePos, int Mask);
 
 public:
 	enum
@@ -21,6 +26,11 @@ public:
 		COLFLAG_SOLID=1,
 		COLFLAG_DEATH=2,
 		COLFLAG_NOHOOK=4,
+
+		RACECHECK_TILES_MAIN=1,
+		RACECHECK_TILES_STOP=2,
+		RACECHECK_TELE=4,
+		RACECHECK_SPEEDUP=8,
 	};
 
 	CCollision();
@@ -34,6 +44,16 @@ public:
 	void MovePoint(vec2 *pInoutPos, vec2 *pInoutVel, float Elasticity, int *pBounces) const;
 	void MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, float Elasticity) const;
 	bool TestBox(vec2 Pos, vec2 Size) const;
+
+	// race
+	int GetTilePos(vec2 Pos);
+	vec2 GetPos(int TilePos);
+	int GetIndex(vec2 Pos);
+	int GetIndex(int TilePos);
+
+	int CheckRaceTile(vec2 PrevPos, vec2 Pos, int Mask);
+
+	int CheckCheckpoint(int TilePos);
 };
 
 #endif

@@ -2,8 +2,10 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <base/math.h>
 
+#include <engine/config.h>
 #include <engine/shared/config.h>
 #include <engine/shared/memheap.h>
+#include <engine/storage.h>
 #include <engine/map.h>
 
 #include <generated/server_data.h>
@@ -12,14 +14,21 @@
 #include <game/version.h>
 
 #include "entities/character.h"
+/*
 #include "gamemodes/ctf.h"
 #include "gamemodes/dm.h"
 #include "gamemodes/lms.h"
 #include "gamemodes/lts.h"
 #include "gamemodes/mod.h"
 #include "gamemodes/tdm.h"
+*/
+#include "gamemodes/fastcap.h"
+#include "gamemodes/race.h"
 #include "gamecontext.h"
 #include "player.h"
+
+#include "score.h"
+#include "score/file_score.h"
 
 enum
 {
@@ -45,6 +54,9 @@ void CGameContext::Construct(int Resetting)
 
 	if(Resetting==NO_RESET)
 		m_pVoteOptionHeap = new CHeap();
+
+	m_pScore = 0;
+	m_pChatConsole = 0;
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -62,7 +74,11 @@ CGameContext::~CGameContext()
 	for(int i = 0; i < MAX_CLIENTS; i++)
 		delete m_apPlayers[i];
 	if(!m_Resetting)
+	{
 		delete m_pVoteOptionHeap;
+		delete m_pScore;
+		delete m_pChatConsole;
+	}
 }
 
 void CGameContext::Clear()
@@ -72,6 +88,8 @@ void CGameContext::Clear()
 	CVoteOptionServer *pVoteOptionLast = m_pVoteOptionLast;
 	int NumVoteOptions = m_NumVoteOptions;
 	CTuningParams Tuning = m_Tuning;
+	IScore *pScore = m_pScore;
+	IConsole *pChatConsole = m_pChatConsole;
 
 	m_Resetting = true;
 	this->~CGameContext();
@@ -83,6 +101,8 @@ void CGameContext::Clear()
 	m_pVoteOptionLast = pVoteOptionLast;
 	m_NumVoteOptions = NumVoteOptions;
 	m_Tuning = Tuning;
+	m_pScore = pScore;
+	m_pChatConsole = pChatConsole;
 }
 
 
@@ -96,7 +116,7 @@ class CCharacter *CGameContext::GetPlayerChar(int ClientID)
 void CGameContext::CreateDamage(vec2 Pos, int Id, vec2 Source, int HealthAmount, int ArmorAmount, bool Self)
 {
 	float f = angle(Source);
-	CNetEvent_Damage *pEvent = (CNetEvent_Damage *)m_Events.Create(NETEVENTTYPE_DAMAGE, sizeof(CNetEvent_Damage));
+	CNetEvent_Damage *pEvent = (CNetEvent_Damage *)m_Events.Create(NETEVENTTYPE_DAMAGE, sizeof(CNetEvent_Damage), CmaskRace(this, Id));
 	if(pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -124,7 +144,7 @@ void CGameContext::CreateHammerHit(vec2 Pos)
 void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamage)
 {
 	// create the event
-	CNetEvent_Explosion *pEvent = (CNetEvent_Explosion *)m_Events.Create(NETEVENTTYPE_EXPLOSION, sizeof(CNetEvent_Explosion));
+	CNetEvent_Explosion *pEvent = (CNetEvent_Explosion *)m_Events.Create(NETEVENTTYPE_EXPLOSION, sizeof(CNetEvent_Explosion), CmaskRace(this, Owner));
 	if(pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -150,10 +170,10 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamag
 	}
 }
 
-void CGameContext::CreatePlayerSpawn(vec2 Pos)
+void CGameContext::CreatePlayerSpawn(vec2 Pos, int ClientID)
 {
 	// create the event
-	CNetEvent_Spawn *ev = (CNetEvent_Spawn *)m_Events.Create(NETEVENTTYPE_SPAWN, sizeof(CNetEvent_Spawn));
+	CNetEvent_Spawn *ev = (CNetEvent_Spawn *)m_Events.Create(NETEVENTTYPE_SPAWN, sizeof(CNetEvent_Spawn), CmaskRace(this, ClientID));
 	if(ev)
 	{
 		ev->m_X = (int)Pos.x;
@@ -164,7 +184,7 @@ void CGameContext::CreatePlayerSpawn(vec2 Pos)
 void CGameContext::CreateDeath(vec2 Pos, int ClientID)
 {
 	// create the event
-	CNetEvent_Death *pEvent = (CNetEvent_Death *)m_Events.Create(NETEVENTTYPE_DEATH, sizeof(CNetEvent_Death));
+	CNetEvent_Death *pEvent = (CNetEvent_Death *)m_Events.Create(NETEVENTTYPE_DEATH, sizeof(CNetEvent_Death), CmaskRace(this, ClientID));
 	if(pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -214,7 +234,7 @@ void CGameContext::SendChat(int ChatterClientID, int Mode, int To, const char *p
 	Msg.m_TargetID = -1;
 
 	if(Mode == CHAT_ALL)
-		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
+		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, To);
 	else if(Mode == CHAT_TEAM)
 	{
 		// pack one for the recording only
@@ -257,7 +277,7 @@ void CGameContext::SendWeaponPickup(int ClientID, int Weapon)
 {
 	CNetMsg_Sv_WeaponPickup Msg;
 	Msg.m_Weapon = Weapon;
-	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, ClientID);
+	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_FLUSH, ClientID);
 }
 
 void CGameContext::SendMotd(int ClientID)
@@ -401,6 +421,14 @@ void CGameContext::AbortVoteOnTeamChange(int ClientID)
 		m_VoteCloseTime = -1;
 }
 
+bool CGameContext::IsPureTuning() const
+{
+	CTuningParams Tuning;
+	Tuning.m_PlayerCollision = 0;
+	Tuning.m_PlayerHooking = 0;
+
+	return mem_comp(&Tuning, &m_Tuning, sizeof(Tuning)) == 0;
+}
 
 void CGameContext::CheckPureTuning()
 {
@@ -452,6 +480,8 @@ void CGameContext::OnTick()
 {
 	// check tuning
 	CheckPureTuning();
+
+	Score()->Tick();
 
 	// copy tuning
 	m_World.m_Core.m_Tuning = m_Tuning;
@@ -588,6 +618,8 @@ void CGameContext::OnClientPredictedInput(int ClientID, void *pInput)
 
 void CGameContext::OnClientEnter(int ClientID)
 {
+	Score()->OnPlayerInit(ClientID);
+	
 	m_pController->OnPlayerConnect(m_apPlayers[ClientID]);
 
 	m_VoteUpdate = true;
@@ -767,21 +799,30 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			pPlayer->m_LastChat = Server()->Tick();
 
-			// don't allow spectators to disturb players during a running game in tournament mode
-			int Mode = pMsg->m_Mode;
-			if((g_Config.m_SvTournamentMode == 2) &&
-				pPlayer->GetTeam() == TEAM_SPECTATORS &&
-				m_pController->IsGameRunning() &&
-				!Server()->IsAuthed(ClientID))
+			if(pMsg->m_pMessage[0] == '/')
 			{
-				if(Mode != CHAT_WHISPER)
-					Mode = CHAT_TEAM;
-				else if(m_apPlayers[pMsg->m_Target] && m_apPlayers[pMsg->m_Target]->GetTeam() != TEAM_SPECTATORS)
-					Mode = CHAT_NONE;
+				m_ChatConsoleClientID = ClientID;
+				m_pChatConsole->ExecuteLine(pMsg->m_pMessage + 1);
+				m_ChatConsoleClientID = -1;
 			}
+			else
+			{
+				// don't allow spectators to disturb players during a running game in tournament mode
+				int Mode = pMsg->m_Mode;
+				if((g_Config.m_SvTournamentMode == 2) &&
+					pPlayer->GetTeam() == TEAM_SPECTATORS &&
+					m_pController->IsGameRunning() &&
+					!Server()->IsAuthed(ClientID))
+				{
+					if(Mode != CHAT_WHISPER)
+						Mode = CHAT_TEAM;
+					else if(m_apPlayers[pMsg->m_Target] && m_apPlayers[pMsg->m_Target]->GetTeam() != TEAM_SPECTATORS)
+						Mode = CHAT_NONE;
+				}
 
-			if(Mode != CHAT_NONE)
-				SendChat(ClientID, Mode, pMsg->m_Target, pMsg->m_pMessage);
+				if(Mode != CHAT_NONE)
+					SendChat(ClientID, Mode, pMsg->m_Target, pMsg->m_pMessage);
+			}
 		}
 		else if(MsgID == NETMSGTYPE_CL_CALLVOTE)
 		{
@@ -963,11 +1004,12 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 		}
 		else if (MsgID == NETMSGTYPE_CL_KILL && !m_World.m_Paused)
 		{
-			if(pPlayer->m_LastKill && pPlayer->m_LastKill+Server()->TickSpeed()*3 > Server()->Tick())
+			if(pPlayer->m_LastKill && pPlayer->m_LastKill+Server()->TickSpeed()/2 > Server()->Tick())
 				return;
 
 			pPlayer->m_LastKill = Server()->Tick();
 			pPlayer->KillCharacter(WEAPON_SELF);
+			pPlayer->m_RespawnTick = Server()->Tick();
 		}
 		else if (MsgID == NETMSGTYPE_CL_READYCHANGE)
 		{
@@ -1056,6 +1098,8 @@ void CGameContext::ConTuneReset(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	CTuningParams TuningParams;
+	TuningParams.m_PlayerCollision = 0;
+	TuningParams.m_PlayerHooking = 0;
 	*pSelf->Tuning() = TuningParams;
 	pSelf->SendTuningParams(-1);
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "tuning", "Tuning reset");
@@ -1391,6 +1435,7 @@ void CGameContext::OnConsoleInit()
 {
 	m_pServer = Kernel()->RequestInterface<IServer>();
 	m_pConsole = Kernel()->RequestInterface<IConsole>();
+	m_pStorage = Kernel()->RequestInterface<IStorage>();
 
 	Console()->Register("tune", "si", CFGFLAG_SERVER, ConTuneParam, this, "Tune variable to value");
 	Console()->Register("tune_reset", "", CFGFLAG_SERVER, ConTuneReset, this, "Reset tuning");
@@ -1419,6 +1464,7 @@ void CGameContext::OnInit()
 	// init everything
 	m_pServer = Kernel()->RequestInterface<IServer>();
 	m_pConsole = Kernel()->RequestInterface<IConsole>();
+	m_pStorage = Kernel()->RequestInterface<IStorage>();
 	m_World.SetGameServer(this);
 	m_Events.SetGameServer(this);
 
@@ -1429,6 +1475,7 @@ void CGameContext::OnInit()
 	m_Collision.Init(&m_Layers);
 
 	// select gametype
+	/*
 	if(str_comp_nocase(g_Config.m_SvGametype, "mod") == 0)
 		m_pController = new CGameControllerMOD(this);
 	else if(str_comp_nocase(g_Config.m_SvGametype, "ctf") == 0)
@@ -1441,6 +1488,33 @@ void CGameContext::OnInit()
 		m_pController = new CGameControllerTDM(this);
 	else
 		m_pController = new CGameControllerDM(this);
+	*/
+
+	InitChatConsole();
+
+	IConfig *pConfig = Kernel()->RequestInterface<IConfig>();
+	if(pConfig)
+		pConfig->Reset(CFGFLAG_MAPSETTINGS);
+	//LoadMapSettings();
+
+	if(str_find_nocase(g_Config.m_SvMap, "no-weapons") || str_find_nocase(g_Config.m_SvGametype, "no-weapons"))
+		g_Config.m_SvNoItems = true;
+
+	if(str_find_nocase(g_Config.m_SvGametype, "fastcap"))
+		m_pController = new CGameControllerFC(this);
+	else
+		m_pController = new CGameControllerRACE(this);
+
+	// create score object
+	if(!m_pScore)
+	{
+		m_pScore = new CFileScore(this);
+	}
+
+	m_pScore->OnMapLoad();
+
+	m_Tuning.m_PlayerCollision = 0;
+	m_Tuning.m_PlayerHooking = 0;
 
 	// create all entities from the game layer
 	CMapItemLayerTilemap *pTileMap = m_Layers.GameLayer();

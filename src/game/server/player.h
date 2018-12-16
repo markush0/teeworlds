@@ -59,6 +59,9 @@ public:
 	bool DeadCanFollow(CPlayer *pPlayer) const;
 	void UpdateDeadSpecMode();
 
+	void ToggleShowOthers() { m_ShowOthers ^= 1; }
+	bool ShowOthers() const;
+
 	bool m_IsReadyToEnter;
 	bool m_IsReadyToPlay;
 
@@ -130,6 +133,8 @@ private:
 	int m_SpectatorID;
 	class CFlag *m_pSpecFlag;
 	bool m_ActiveSpecSwitch;
+
+	bool m_ShowOthers;
 };
 
 #endif

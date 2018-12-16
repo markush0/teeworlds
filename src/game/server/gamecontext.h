@@ -37,10 +37,15 @@ class CGameContext : public IGameServer
 {
 	IServer *m_pServer;
 	class IConsole *m_pConsole;
+	class IConsole *m_pChatConsole;
+	class IStorage *m_pStorage;
 	CLayers m_Layers;
 	CCollision m_Collision;
 	CNetObjHandler m_NetObjHandler;
 	CTuningParams m_Tuning;
+
+	// race
+	class IScore *m_pScore;
 
 	static void ConTuneParam(IConsole::IResult *pResult, void *pUserData);
 	static void ConTuneReset(IConsole::IResult *pResult, void *pUserData);
@@ -64,6 +69,15 @@ class CGameContext : public IGameServer
 	static void ConchainSettingUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainGameinfoUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
+	static void SendChatResponse(const char *pLine, void *pUser, bool Highlighted);
+	static void ChatConInfo(IConsole::IResult *pResult, void *pUser);
+	static void ChatConTop5(IConsole::IResult *pResult, void *pUser);
+	static void ChatConRank(IConsole::IResult *pResult, void *pUser);
+	static void ChatConShowOthers(IConsole::IResult *pResult, void *pUser);
+	static void ChatConCmdlist(IConsole::IResult *pResult, void *pUser);
+
+	int m_ChatConsoleClientID;
+
 	CGameContext(int Resetting);
 	void Construct(int Resetting);
 
@@ -71,13 +85,20 @@ class CGameContext : public IGameServer
 public:
 	IServer *Server() const { return m_pServer; }
 	class IConsole *Console() { return m_pConsole; }
+	class IStorage *Storage() { return m_pStorage; }
 	CCollision *Collision() { return &m_Collision; }
 	CTuningParams *Tuning() { return &m_Tuning; }
+
+	// race
+	class IScore *Score() { return m_pScore; }
+	class CGameControllerRACE *RaceController() { return (class CGameControllerRACE*)m_pController; }
 
 	CGameContext();
 	~CGameContext();
 
 	void Clear();
+
+	void InitChatConsole();
 
 	CEventHandler m_Events;
 	class CPlayer *m_apPlayers[MAX_CLIENTS];
@@ -127,7 +148,7 @@ public:
 	void CreateDamage(vec2 Pos, int Id, vec2 Source, int HealthAmount, int ArmorAmount, bool Self);
 	void CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamage);
 	void CreateHammerHit(vec2 Pos);
-	void CreatePlayerSpawn(vec2 Pos);
+	void CreatePlayerSpawn(vec2 Pos, int ClientID);
 	void CreateDeath(vec2 Pos, int Who);
 	void CreateSound(vec2 Pos, int Sound, int64 Mask=-1);
 
@@ -144,6 +165,7 @@ public:
 	void SendGameMsg(int GameMsgID, int ParaI1, int ParaI2, int ParaI3, int ClientID);
 
 	//
+	bool IsPureTuning() const;
 	void CheckPureTuning();
 	void SendTuningParams(int ClientID);
 
@@ -182,4 +204,5 @@ inline int64 CmaskAll() { return -1; }
 inline int64 CmaskOne(int ClientID) { return 1<<ClientID; }
 inline int64 CmaskAllExceptOne(int ClientID) { return CmaskAll()^CmaskOne(ClientID); }
 inline bool CmaskIsSet(int64 Mask, int ClientID) { return (Mask&CmaskOne(ClientID)) != 0; }
+int64 CmaskRace(CGameContext *pGameServer, int Owner);
 #endif

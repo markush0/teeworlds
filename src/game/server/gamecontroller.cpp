@@ -315,7 +315,7 @@ bool IGameController::OnEntity(int Index, vec2 Pos)
 			Type = PICKUP_NINJA;
 	}
 
-	if(Type != -1)
+	if(Type != -1 && !g_Config.m_SvNoItems)
 	{
 		new CPickup(&GameServer()->m_World, Type, Pos);
 		return true;
@@ -973,7 +973,19 @@ bool IGameController::CanSpawn(int Team, vec2 *pOutPos) const
 
 	CSpawnEval Eval;
 
-	if(IsTeamplay())
+	if(IsFastCap())
+	{
+		Eval.m_FriendlyTeam = Team;
+
+		EvaluateSpawnType(&Eval, 1+((Team+1)&1));
+		if(!Eval.m_Got)
+		{
+			EvaluateSpawnType(&Eval, 0);
+			if(!Eval.m_Got)
+				EvaluateSpawnType(&Eval, 1+(Team&1));
+		}
+	}
+	else if(IsTeamplay())
 	{
 		Eval.m_FriendlyTeam = Team;
 
@@ -1000,6 +1012,7 @@ bool IGameController::CanSpawn(int Team, vec2 *pOutPos) const
 float IGameController::EvaluateSpawnPos(CSpawnEval *pEval, vec2 Pos) const
 {
 	float Score = 0.0f;
+	/*
 	CCharacter *pC = static_cast<CCharacter *>(GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER));
 	for(; pC; pC = (CCharacter *)pC->TypeNext())
 	{
@@ -1011,6 +1024,7 @@ float IGameController::EvaluateSpawnPos(CSpawnEval *pEval, vec2 Pos) const
 		float d = distance(Pos, pC->GetPos());
 		Score += Scoremod * (d == 0 ? 1000000000.0f : 1.0f/d);
 	}
+	*/
 
 	return Score;
 }
@@ -1021,6 +1035,7 @@ void IGameController::EvaluateSpawnType(CSpawnEval *pEval, int Type) const
 	for(int i = 0; i < m_aNumSpawnPoints[Type]; i++)
 	{
 		// check if the position is occupado
+		/*
 		CCharacter *aEnts[MAX_CLIENTS];
 		int Num = GameServer()->m_World.FindEntities(m_aaSpawnPoints[Type][i], 64, (CEntity**)aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 		vec2 Positions[5] = { vec2(0.0f, 0.0f), vec2(-32.0f, 0.0f), vec2(0.0f, -32.0f), vec2(32.0f, 0.0f), vec2(0.0f, 32.0f) };	// start, left, up, right, down
@@ -1040,6 +1055,8 @@ void IGameController::EvaluateSpawnType(CSpawnEval *pEval, int Type) const
 			continue;	// try next spawn point
 
 		vec2 P = m_aaSpawnPoints[Type][i]+Positions[Result];
+		*/
+		vec2 P = m_aaSpawnPoints[Type][i];
 		float S = EvaluateSpawnPos(pEval, P);
 		if(!pEval->m_Got || pEval->m_Score > S)
 		{

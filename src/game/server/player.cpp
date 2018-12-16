@@ -1,10 +1,13 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 
+#include <engine/shared/config.h>
+
 #include "entities/character.h"
 #include "entities/flag.h"
 #include "gamecontext.h"
 #include "gamecontroller.h"
+#include "score.h"
 #include "player.h"
 
 
@@ -33,6 +36,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Dummy)
 	m_RespawnDisabled = GameServer()->m_pController->GetStartRespawnState();
 	m_DeadSpecMode = false;
 	m_Spawning = 0;
+
+	m_ShowOthers = true;
 }
 
 CPlayer::~CPlayer()
@@ -46,7 +51,9 @@ void CPlayer::Tick()
 	if(!IsDummy() && !Server()->ClientIngame(m_ClientID))
 		return;
 
-	Server()->SetClientScore(m_ClientID, m_Score);
+	int CurTime = GameServer()->Score()->PlayerData(m_ClientID)->m_CurTime;
+	int TimeScore = CurTime ? -(CurTime / 1000) : -9999;
+	Server()->SetClientScore(m_ClientID, g_Config.m_SvShowTimes ? TimeScore : 0);
 
 	// do latency stuff
 	{
@@ -154,7 +161,10 @@ void CPlayer::Snap(int SnappingClient)
 		pPlayerInfo->m_PlayerFlags |= PLAYERFLAG_WATCHING;
 
 	pPlayerInfo->m_Latency = SnappingClient == -1 ? m_Latency.m_Min : GameServer()->m_apPlayers[SnappingClient]->m_aActLatency[m_ClientID];
-	pPlayerInfo->m_Score = m_Score;
+	
+	int CurTime = GameServer()->Score()->PlayerData(m_ClientID)->m_CurTime;
+	int TimeScore = CurTime ? -(CurTime / 1000) : -9999;
+	pPlayerInfo->m_Score = (g_Config.m_SvShowTimes || SnappingClient == m_ClientID) ? TimeScore : 0;
 
 	if(m_ClientID == SnappingClient && (m_Team == TEAM_SPECTATORS || m_DeadSpecMode))
 	{
@@ -347,7 +357,8 @@ void CPlayer::Respawn()
 bool CPlayer::SetSpectatorID(int SpecMode, int SpectatorID)
 {
 	if((SpecMode == m_SpecMode && SpecMode != SPEC_PLAYER) ||
-		(m_SpecMode == SPEC_PLAYER && SpecMode == SPEC_PLAYER && (SpectatorID == -1 || m_SpectatorID == SpectatorID || m_ClientID == SpectatorID)))
+		(m_SpecMode == SPEC_PLAYER && SpecMode == SPEC_PLAYER && (SpectatorID == -1 || m_SpectatorID == SpectatorID || m_ClientID == SpectatorID)) ||
+		(SpecMode == SPEC_PLAYER && !g_Config.m_SvShowOthers))
 	{
 		return false;
 	}
@@ -468,5 +479,10 @@ void CPlayer::TryRespawn()
 	m_Spawning = false;
 	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World);
 	m_pCharacter->Spawn(this, SpawnPos);
-	GameServer()->CreatePlayerSpawn(SpawnPos);
+	GameServer()->CreatePlayerSpawn(SpawnPos, GetCID());
+}
+
+bool CPlayer::ShowOthers() const
+{
+	return g_Config.m_SvShowOthers && (m_ShowOthers || m_Team == TEAM_SPECTATORS);
 }

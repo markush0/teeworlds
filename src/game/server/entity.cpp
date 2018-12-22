@@ -48,6 +48,11 @@ int CEntity::NetworkClipped(int SnappingClient, vec2 CheckPos)
 	return 0;
 }
 
+bool CEntity::CheckShowOthers(int SnappingClient, int Owner)
+{
+	return SnappingClient == -1 || GameServer()->m_apPlayers[SnappingClient]->ShowOthers() || SnappingClient == Owner;
+}
+
 bool CEntity::GameLayerClipped(vec2 CheckPos)
 {
 	int rx = round_to_int(CheckPos.x) / 32;

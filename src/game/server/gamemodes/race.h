@@ -7,6 +7,7 @@
 
 class CGameControllerRACE : public IGameController
 {
+	void SendTime(int ClientID, int To);
 	void OnCheckpoint(int ID, int z);
 
 	int GetTime(int ID) const;
@@ -18,8 +19,6 @@ protected:
 	{
 		int m_RaceState;
 		int m_StartTick;
-		int m_RefreshTick;
-
 		int m_aCpCurrent[NUM_CHECKPOINTS];
 		int m_CpTick;
 		int m_CpDiff;
@@ -30,7 +29,6 @@ protected:
 		{
 			m_RaceState = RACE_NONE;
 			m_StartTick = -1;
-			m_RefreshTick = -1;
 			mem_zero(m_aCpCurrent, sizeof(m_aCpCurrent));
 			m_CpTick = -1;
 			m_CpDiff = 0;

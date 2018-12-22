@@ -153,7 +153,9 @@ void CPickup::TickPaused()
 
 void CPickup::Snap(int SnappingClient)
 {
-	if(m_SpawnTick[SnappingClient] != -1 || NetworkClipped(SnappingClient))
+	int SpecID = SnappingClient == -1 ? -1 : GameServer()->m_apPlayers[SnappingClient]->GetSpectatorID();
+	int OwnerID = SpecID == -1 ? SnappingClient : SpecID;
+	if((OwnerID != -1 && m_SpawnTick[OwnerID] != -1) || NetworkClipped(SnappingClient))
 		return;
 
 	CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, GetID(), sizeof(CNetObj_Pickup)));

@@ -138,6 +138,8 @@ public:
 	int NetworkClipped(int SnappingClient);
 	int NetworkClipped(int SnappingClient, vec2 CheckPos);
 
+	bool CheckShowOthers(int SnappingClient, int Owner);
+
 	bool GameLayerClipped(vec2 CheckPos);
 };
 

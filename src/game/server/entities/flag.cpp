@@ -89,9 +89,9 @@ void CFlag::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient))
 		return;
 
-	if((!m_pCarrier && GameServer()->m_apPlayers[SnappingClient]->GetTeam() != m_Team &&
+	if((!m_pCarrier && SnappingClient != -1 && GameServer()->m_apPlayers[SnappingClient]->GetTeam() != m_Team &&
 		GameServer()->RaceController()->GetRaceState(SnappingClient) == CGameControllerRACE::RACE_STARTED) ||
-		(m_pCarrier && !GameServer()->m_apPlayers[SnappingClient]->ShowOthers() && SnappingClient != m_pCarrier->GetPlayer()->GetCID()))
+		(m_pCarrier && !CheckShowOthers(SnappingClient, m_pCarrier->GetPlayer()->GetCID())))
 		return;
 
 	CNetObj_Flag *pFlag = (CNetObj_Flag *)Server()->SnapNewItem(NETOBJTYPE_FLAG, GetID(), sizeof(CNetObj_Flag));

@@ -100,8 +100,7 @@ void CLaser::TickPaused()
 
 void CLaser::Snap(int SnappingClient)
 {
-	if((NetworkClipped(SnappingClient) && NetworkClipped(SnappingClient, m_From))
-		|| (!GameServer()->m_apPlayers[SnappingClient]->ShowOthers() && SnappingClient != m_Owner))
+	if((NetworkClipped(SnappingClient) && NetworkClipped(SnappingClient, m_From)) || !CheckShowOthers(SnappingClient, m_Owner))
 		return;
 
 	CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, GetID(), sizeof(CNetObj_Laser)));

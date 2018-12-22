@@ -121,8 +121,7 @@ void CProjectile::Snap(int SnappingClient)
 {
 	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
 
-	if(NetworkClipped(SnappingClient, GetPos(Ct)) || (GameServer()->m_apPlayers[SnappingClient] &&
-		!GameServer()->m_apPlayers[SnappingClient]->ShowOthers() && SnappingClient != m_Owner))
+	if(NetworkClipped(SnappingClient, GetPos(Ct)) || !CheckShowOthers(SnappingClient, m_Owner))
 		return;
 
 	CNetObj_Projectile *pProj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, GetID(), sizeof(CNetObj_Projectile)));

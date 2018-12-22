@@ -90,16 +90,17 @@ void CProjectile::Tick()
 		GameServer()->m_World.DestroyEntity(this);
 	}
 
-	/*if(m_Weapon == WEAPON_GRENADE && g_Config.m_SvTeleportGrenade)
+	if(m_Weapon == WEAPON_GRENADE && g_Config.m_SvTeleportGrenade)
 	{
+		bool Stop;
 		int TilePos = GameServer()->Collision()->CheckRaceTile(PrevPos, CurPos, CCollision::RACECHECK_TELE);
-		int Tele = GameServer()->Collision()->CheckTeleport(TilePos);
+		int Tele = GameServer()->Collision()->CheckTeleport(TilePos, &Stop);
 		if(Tele)
 		{
 			m_Pos = GameServer()->Collision()->GetTeleportDestination(Tele);
 			m_StartTick = Server()->Tick();
 		}
-	}*/
+	}
 }
 
 void CProjectile::TickPaused()

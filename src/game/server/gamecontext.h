@@ -93,6 +93,8 @@ public:
 	class IScore *Score() { return m_pScore; }
 	class CGameControllerRACE *RaceController() { return (class CGameControllerRACE*)m_pController; }
 
+	void LoadMapSettings();
+
 	CGameContext();
 	~CGameContext();
 

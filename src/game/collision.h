@@ -8,12 +8,19 @@
 class CCollision
 {
 	class CTile *m_pTiles;
+	class CTile *m_pTilesEx;
+	class CTile *m_pTele;
+	class CTile *m_pSpeedupForce;
+	class CTile *m_pSpeedupAngle;
 	int m_Width;
 	int m_Height;
 	class CLayers *m_pLayers;
 
+	vec2 *m_pTeleporter;
 	bool m_MainTiles;
 	bool m_StopTiles;
+
+	void InitTeleporter();
 
 	bool IsTileSolid(int x, int y) const;
 	int GetTile(int x, int y) const;
@@ -34,6 +41,7 @@ public:
 	};
 
 	CCollision();
+	virtual ~CCollision();
 	void Init(class CLayers *pLayers);
 	bool CheckPoint(float x, float y) const { return IsTileSolid(round_to_int(x), round_to_int(y)); }
 	bool CheckPoint(vec2 Pos) const { return CheckPoint(Pos.x, Pos.y); }
@@ -47,13 +55,20 @@ public:
 
 	// race
 	int GetTilePos(vec2 Pos);
+	int GetTilePosLayer(const class CMapItemLayerTilemap *pLayer, int TilePos);
 	vec2 GetPos(int TilePos);
-	int GetIndex(vec2 Pos);
-	int GetIndex(int TilePos);
+
+	bool CheckIndexEx(vec2 Pos, int Index) { return CheckIndexEx(GetTilePos(Pos), Index); }
+	bool CheckIndexEx(int TilePos, int Index);
+	int CheckIndexExRange(int TilePos, int MinIndex, int MaxIndex);
 
 	int CheckRaceTile(vec2 PrevPos, vec2 Pos, int Mask);
 
 	int CheckCheckpoint(int TilePos);
+	int CheckSpeedup(int TilePos);
+	void GetSpeedup(int SpeedupPos, vec2 *Dir, int *Force);
+	int CheckTeleport(int TilePos);
+	vec2 GetTeleportDestination(int Number);
 };
 
 #endif

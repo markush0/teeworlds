@@ -155,14 +155,14 @@ void CGameControllerRACE::OnRaceEnd(int ID, int FinishTime)
 
 bool CGameControllerRACE::IsStart(int TilePos, vec2 Pos, int Team) const
 {
-	return GameServer()->Collision()->GetIndex(TilePos) == TILE_BEGIN
-		|| GameServer()->Collision()->GetIndex(Pos) == TILE_BEGIN;
+	return GameServer()->Collision()->CheckIndexEx(TilePos, TILE_BEGIN)
+		|| GameServer()->Collision()->CheckIndexEx(Pos, TILE_BEGIN);
 }
 
 bool CGameControllerRACE::IsEnd(int TilePos, vec2 Pos, int Team) const
 {
-	return GameServer()->Collision()->GetIndex(TilePos) == TILE_END
-		|| GameServer()->Collision()->GetIndex(Pos) == TILE_END;
+	return GameServer()->Collision()->CheckIndexEx(TilePos, TILE_END)
+		|| GameServer()->Collision()->CheckIndexEx(Pos, TILE_END);
 }
 
 void CGameControllerRACE::ProcessRaceTile(int ID, int TilePos, vec2 PrevPos, vec2 Pos)

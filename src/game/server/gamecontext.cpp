@@ -1495,7 +1495,7 @@ void CGameContext::OnInit()
 	IConfig *pConfig = Kernel()->RequestInterface<IConfig>();
 	if(pConfig)
 		pConfig->Reset(CFGFLAG_MAPSETTINGS);
-	//LoadMapSettings();
+	LoadMapSettings();
 
 	if(str_find_nocase(g_Config.m_SvMap, "no-weapons") || str_find_nocase(g_Config.m_SvGametype, "no-weapons"))
 		g_Config.m_SvNoItems = true;

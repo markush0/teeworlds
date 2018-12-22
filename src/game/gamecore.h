@@ -133,13 +133,20 @@ enum
 class CWorldCore
 {
 public:
-	CWorldCore()
+	CWorldCore(bool Race = false)
 	{
 		mem_zero(m_apCharacters, sizeof(m_apCharacters));
+		m_Teleport = Race;
+		m_Speedup = Race;
+		m_StopTiles = Race;
 	}
 
 	CTuningParams m_Tuning;
 	class CCharacterCore *m_apCharacters[MAX_CLIENTS];
+
+	bool m_Teleport;
+	bool m_Speedup;
+	bool m_StopTiles;
 };
 
 class CCharacterCore
@@ -148,6 +155,7 @@ class CCharacterCore
 	CCollision *m_pCollision;
 public:
 	vec2 m_Pos;
+	vec2 m_PrevPos;
 	vec2 m_Vel;
 
 	vec2 m_HookPos;
@@ -163,6 +171,8 @@ public:
 	CNetObj_PlayerInput m_Input;
 
 	int m_TriggeredEvents;
+
+	int m_LastSpeedup;
 
 	void Init(CWorldCore *pWorld, CCollision *pCollision);
 	void Reset();

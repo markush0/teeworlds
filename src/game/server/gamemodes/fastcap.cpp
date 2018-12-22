@@ -70,10 +70,7 @@ void CGameControllerFC::OnCharacterSpawn(class CCharacter *pChr)
 
 	// give nades
 	if(!g_Config.m_SvNoItems)
-	{
 		pChr->GiveWeapon(WEAPON_GRENADE, 10);
-		pChr->SetActiveWeapon(WEAPON_HAMMER);
-	}
 }
 
 bool CGameControllerFC::CanBeMovedOnBalance(int Cid)

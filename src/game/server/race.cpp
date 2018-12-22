@@ -120,6 +120,27 @@ void CGameContext::SendChatResponse(const char *pLine, void *pUser, bool Highlig
 	ReentryGuard--;
 }
 
+void CGameContext::LoadMapSettings()
+{
+	if(m_Layers.SettingsLayer())
+	{
+		CMapItemLayerTilemap *pLayer = m_Layers.SettingsLayer();
+		CTile *pTiles = static_cast<CTile *>(m_Layers.Map()->GetData(pLayer->m_Data));
+		char *pCommand = new char[pLayer->m_Width+1];
+		pCommand[pLayer->m_Width] = 0;
+
+		for(int i = 0; i < pLayer->m_Height; i++)
+		{
+			for(int j = 0; j < pLayer->m_Width; j++)
+				pCommand[j] = pTiles[i*pLayer->m_Width+j].m_Index;
+			Console()->ExecuteLineFlag(pCommand, CFGFLAG_MAPSETTINGS);
+		}
+
+		delete[] pCommand;
+		m_Layers.Map()->UnloadData(pLayer->m_Data);
+	}
+}
+
 int64 CmaskRace(CGameContext *pGameServer, int Owner)
 {
 	int64 Mask = CmaskOne(Owner);

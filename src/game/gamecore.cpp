@@ -1,5 +1,6 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
+#include "mapitems.h"
 #include "gamecore.h"
 
 const char *CTuningParams::m_apNames[] =
@@ -64,6 +65,7 @@ void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision)
 void CCharacterCore::Reset()
 {
 	m_Pos = vec2(0,0);
+	m_PrevPos = vec2(0,0);
 	m_Vel = vec2(0,0);
 	m_HookPos = vec2(0,0);
 	m_HookDir = vec2(0,0);
@@ -72,12 +74,15 @@ void CCharacterCore::Reset()
 	m_HookedPlayer = -1;
 	m_Jumped = 0;
 	m_TriggeredEvents = 0;
+	m_LastSpeedup = -1;
 }
 
 void CCharacterCore::Tick(bool UseInput)
 {
 	float PhysSize = 28.0f;
 	m_TriggeredEvents = 0;
+
+	int Jumped = m_Jumped;
 
 	// get ground state
 	bool Grounded = false;
@@ -343,6 +348,88 @@ void CCharacterCore::Tick(bool UseInput)
 	// clamp the velocity to something sane
 	if(length(m_Vel) > 6000)
 		m_Vel = normalize(m_Vel) * 6000;
+
+	// TODO: rework race physics
+	int Mask = 0;
+	if(m_pWorld->m_StopTiles) Mask |= CCollision::RACECHECK_TILES_STOP;
+	if(m_pWorld->m_Speedup) Mask |= CCollision::RACECHECK_SPEEDUP;
+	if(m_pWorld->m_Teleport) Mask |= CCollision::RACECHECK_TELE;
+	int TilePos = m_pCollision->CheckRaceTile(m_PrevPos, m_Pos, Mask);
+
+	if(m_pWorld->m_StopTiles)
+	{
+		if(m_pCollision->CheckIndexEx(TilePos, TILE_STOPL))
+		{
+			if(m_Vel.x > 0)
+			{
+				if((int)m_pCollision->GetPos(TilePos).x < (int)m_Pos.x)
+					m_Pos.x = m_PrevPos.x;
+				m_Vel.x = 0;
+			}
+		}
+		else if(m_pCollision->CheckIndexEx(TilePos, TILE_STOPR))
+		{
+			if(m_Vel.x < 0)
+			{
+				if((int)m_pCollision->GetPos(TilePos).x > (int)m_Pos.x)
+					m_Pos.x = m_PrevPos.x;
+				m_Vel.x = 0;
+			}
+		}
+		else if(m_pCollision->CheckIndexEx(TilePos, TILE_STOPB))
+		{
+			if(m_Vel.y < 0)
+			{
+				if((int)m_pCollision->GetPos(TilePos).y > (int)m_Pos.y)
+					m_Pos.y = m_PrevPos.y;
+				m_Vel.y = 0;
+			}
+		}
+		else if(m_pCollision->CheckIndexEx(TilePos, TILE_STOPT))
+		{
+			if(m_Vel.y > 0)
+			{
+				if((int)m_pCollision->GetPos(TilePos).y < (int)m_Pos.y)
+					m_Pos.y = m_PrevPos.y;
+				if(Jumped&3 && m_Jumped != Jumped) // check double jump
+					m_Jumped = Jumped;
+				m_Vel.y = 0;
+			}
+		}
+	}
+
+	if(m_pWorld->m_Speedup)
+	{
+		int SpeedupPos = m_pCollision->CheckSpeedup(TilePos);
+		if(m_LastSpeedup != SpeedupPos && SpeedupPos > -1)
+		{
+			vec2 Direction;
+			int Force;
+			m_pCollision->GetSpeedup(SpeedupPos, &Direction, &Force);
+			m_Vel += Direction*Force;
+		}
+		m_LastSpeedup = SpeedupPos;
+	}
+
+	if(m_pWorld->m_Teleport)
+	{
+		//m_Teleported = false;
+		int Tele = m_pCollision->CheckTeleport(TilePos);
+		if(Tele)
+		{
+			// check double jump
+			if(Jumped&3 && m_Jumped != Jumped)
+				m_Jumped = Jumped;
+
+			m_HookedPlayer = -1;
+			m_HookState = HOOK_RETRACTED;
+			m_Pos = m_pCollision->GetTeleportDestination(Tele);
+			m_HookPos = m_Pos;
+			//m_Teleported = true;
+		}
+	}
+
+	m_PrevPos = m_Pos;
 }
 
 void CCharacterCore::Move()
@@ -426,12 +513,16 @@ void CCharacterCore::Read(const CNetObj_CharacterCore *pObjCore)
 	m_Jumped = pObjCore->m_Jumped;
 	m_Direction = pObjCore->m_Direction;
 	m_Angle = pObjCore->m_Angle;
+
+	m_PrevPos = m_Pos;
 }
 
 void CCharacterCore::Quantize()
 {
+	vec2 Prev = m_PrevPos;
 	CNetObj_CharacterCore Core;
 	Write(&Core);
 	Read(&Core);
+	m_PrevPos = Prev;
 }
 

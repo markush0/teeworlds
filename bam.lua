@@ -351,10 +351,12 @@ function BuildServer(settings, family, platform)
 end
 
 function BuildTools(settings)
+	local maplib = Compile(settings, Collect("src/tools/map/*.cpp"))
+
 	local tools = {}
 	for i,v in ipairs(Collect("src/tools/*.cpp", "src/tools/*.c")) do
 		local toolname = PathFilename(PathBase(v))
-		tools[i] = Link(settings, toolname, Compile(settings, v), libs["zlib"], libs["md5"], libs["wavpack"], libs["png"])
+		tools[i] = Link(settings, toolname, Compile(settings, v), maplib, libs["zlib"], libs["md5"], libs["wavpack"], libs["png"])
 	end
 	PseudoTarget(settings.link.Output(settings, "pseudo_tools") .. settings.link.extension, tools)
 end

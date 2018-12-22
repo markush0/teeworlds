@@ -72,7 +72,7 @@ void CGameContext::ChatConShowOthers(IConsole::IResult *pResult, void *pUser)
 		pSelf->m_apPlayers[pSelf->m_ChatConsoleClientID]->ToggleShowOthers();
 }
 
-void CGameContext::ChatConCmdlist(IConsole::IResult *pResult, void *pUser)
+void CGameContext::ChatConHelp(IConsole::IResult *pResult, void *pUser)
 {
 	CGameContext *pSelf = (CGameContext *)pUser;
 
@@ -98,7 +98,7 @@ void CGameContext::InitChatConsole()
 	m_pChatConsole->Register("top5", "?i", CFGFLAG_SERVERCHAT, ChatConTop5, this, "");
 	m_pChatConsole->Register("rank", "?r", CFGFLAG_SERVERCHAT, ChatConRank, this, "");
 	m_pChatConsole->Register("show_others", "", CFGFLAG_SERVERCHAT, ChatConShowOthers, this, "");
-	m_pChatConsole->Register("cmdlist", "", CFGFLAG_SERVERCHAT, ChatConCmdlist, this, "");
+	m_pChatConsole->Register("help", "", CFGFLAG_SERVERCHAT, ChatConHelp, this, "");
 }
 
 void CGameContext::SendChatResponse(const char *pLine, void *pUser, bool Highlighted)

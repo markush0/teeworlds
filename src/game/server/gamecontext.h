@@ -74,7 +74,7 @@ class CGameContext : public IGameServer
 	static void ChatConTop5(IConsole::IResult *pResult, void *pUser);
 	static void ChatConRank(IConsole::IResult *pResult, void *pUser);
 	static void ChatConShowOthers(IConsole::IResult *pResult, void *pUser);
-	static void ChatConCmdlist(IConsole::IResult *pResult, void *pUser);
+	static void ChatConHelp(IConsole::IResult *pResult, void *pUser);
 
 	int m_ChatConsoleClientID;
 

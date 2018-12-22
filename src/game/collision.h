@@ -67,7 +67,7 @@ public:
 	int CheckCheckpoint(int TilePos);
 	int CheckSpeedup(int TilePos);
 	void GetSpeedup(int SpeedupPos, vec2 *Dir, int *Force);
-	int CheckTeleport(int TilePos);
+	int CheckTeleport(int TilePos, bool *pStop);
 	vec2 GetTeleportDestination(int Number);
 };
 

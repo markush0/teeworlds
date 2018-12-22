@@ -413,8 +413,8 @@ void CCharacterCore::Tick(bool UseInput)
 
 	if(m_pWorld->m_Teleport)
 	{
-		//m_Teleported = false;
-		int Tele = m_pCollision->CheckTeleport(TilePos);
+		bool Stop;
+		int Tele = m_pCollision->CheckTeleport(TilePos, &Stop);
 		if(Tele)
 		{
 			// check double jump
@@ -426,6 +426,9 @@ void CCharacterCore::Tick(bool UseInput)
 			m_Pos = m_pCollision->GetTeleportDestination(Tele);
 			m_HookPos = m_Pos;
 			//m_Teleported = true;
+
+			if(Stop)
+				m_Vel = vec2(0,0);
 		}
 	}
 

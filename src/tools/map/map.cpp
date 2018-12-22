@@ -9,6 +9,45 @@
 
 #include "map.h"
 
+static void IntVariableCommand(IConsole::IResult *pResult, void *pUserData);
+
+struct CIntVariableData
+{
+	IConsole *m_pConsole;
+	const char *m_pName;
+	int *m_pVariable;
+	int m_Def;
+	int m_Min;
+	int m_Max;
+
+	void Register()
+	{
+		*m_pVariable = m_Def;
+		m_pConsole->Register(m_pName, "i", CFGFLAG_MAPSETTINGS, IntVariableCommand, this, "");
+	}
+};
+
+void IntVariableCommand(IConsole::IResult *pResult, void *pUserData)
+{
+	CIntVariableData *pData = (CIntVariableData *)pUserData;
+
+	if(pResult->NumArguments())
+	{
+		int Val = pResult->GetInteger(0);
+
+		// do clamping
+		if(pData->m_Min != pData->m_Max)
+		{
+			if (Val < pData->m_Min)
+				Val = pData->m_Min;
+			if (pData->m_Max != 0 && Val > pData->m_Max)
+				Val = pData->m_Max;
+		}
+
+		*(pData->m_pVariable) = Val;
+	}
+}
+
 int LoadPNG(CImageInfo *pImg, class IStorage *pStorage, const char *pFilename, int StorageType)
 {
 	char aCompleteFilename[512];
@@ -763,6 +802,8 @@ int CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Storag
 			}
 		}
 
+		static int s_TeleportVelReset = 0;
+
 		// load race
 		{
 			CLayerTiles *pGameExtended = 0;
@@ -775,13 +816,28 @@ int CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Storag
 				DataFile.GetType(MAPITEMTYPE_INFO, &Start, &Num);
 				for(int e = 0; e < Num; e++)
 				{
+					static int s_aValues[8];
+					static CIntVariableData s_aVars[] = {
+						{ m_pConsole, "sv_regen", &s_aValues[0], 0, 0, 50 },
+						{ m_pConsole, "sv_strip", &s_aValues[1], 0, 0, 1 },
+						{ m_pConsole, "sv_infinite_ammo", &s_aValues[2], 0, 0, 1 },
+						{ m_pConsole, "sv_no_items", &s_aValues[3], 0, 0, 1 },
+						{ m_pConsole, "sv_teleport_grenade", &s_aValues[4], 0, 0, 1 },
+						{ m_pConsole, "sv_delete_grenades_after_death", &s_aValues[5], 1, 0, 1 },
+						{ m_pConsole, "sv_rocket_jump_damage", &s_aValues[6], 1, 0, 1 },
+						{ m_pConsole, "sv_pickup_respawn", &s_aValues[7], -1, -1, 120 }
+					};
+					static CIntVariableData s_TeleportVelResetVar = { m_pConsole, "sv_teleport_vel_reset", &s_TeleportVelReset, 0, 0, 1 };
+
+					for(int i = 0; i < (sizeof(s_aVars)/sizeof(s_aVars[0])); i++)
+						s_aVars[i].Register();
+					s_TeleportVelResetVar.Register();
+
 					int ItemID;
 					CMapItemInfo *pItem = (CMapItemInfo *)DataFile.GetItem(Start + e, 0, &ItemID);
 					int ItemSize = DataFile.GetItemSize(Start + e) - sizeof(int) * 2;
 					if(!pItem || ItemID != 0)
 						continue;
-
-					array<string> lMapSettings;
 
 					CMapItemInfoRace *pItemRace = (CMapItemInfoRace *)pItem;
 					if(pItemRace->m_Version == 1 && ItemSize >= (int)sizeof(CMapItemInfo) && pItemRace->m_Settings > -1)
@@ -791,22 +847,26 @@ int CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Storag
 						const char *pEnd = pTmp + Size;
 						while(pTmp < pEnd && str_length(pTmp) > 0)
 						{
-							lMapSettings.add(string(pTmp));
+							m_pConsole->ExecuteLineFlag(pTmp, CFGFLAG_MAPSETTINGS);
 							pTmp += str_length(pTmp) + 1;
 						}
 						DataFile.UnloadData(pItemRace->m_Settings);
-					}
 
-					if(lMapSettings.size() > 0)
-					{
+						char aBuf[64];
 						int MaxLen = 0;
-						for(int i = 0; i < lMapSettings.size(); i++)
-							MaxLen = max(MaxLen, str_length(lMapSettings[i]));
+						for(int i = 0; i < (sizeof(s_aVars)/sizeof(s_aVars[0])); i++)
+						{
+							str_format(aBuf, sizeof(aBuf), "%s %d", s_aVars[i].m_pName, s_aValues[i]);
+							MaxLen = max(MaxLen, str_length(aBuf));
+						}
 						
-						pSettings = CreateCustomLayer(this, MaxLen, lMapSettings.size(), "#settings", "_letters");
-						for(int i = 0; i < lMapSettings.size(); i++)
-							for(int j = 0; j < str_length(lMapSettings[i]); j++)
-								pSettings->m_pTiles[i*MaxLen+j].m_Index = *(lMapSettings[i].cstr()+j);
+						pSettings = CreateCustomLayer(this, MaxLen, (sizeof(s_aVars)/sizeof(s_aVars[0])), "#settings", "_letters");
+						for(int i = 0; i < (sizeof(s_aVars)/sizeof(s_aVars[0])); i++)
+						{
+							str_format(aBuf, sizeof(aBuf), "%s %d", s_aVars[i].m_pName, s_aValues[i]);
+							for(int j = 0; j < str_length(aBuf); j++)
+								pSettings->m_pTiles[i*MaxLen+j].m_Index = aBuf[j];
+						}
 					}
 					break;
 				}
@@ -825,13 +885,15 @@ int CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Storag
 						{
 							CLayerTiles *pGameLayer = m_pGameLayer;
 							int GameIndex = m_pGameLayer->m_pTiles[i].m_Index;
-							if((GameIndex >= TILE_SOLID && GameIndex <= TILE_NOHOOK) || (GameIndex >= TILE_TELEIN && GameIndex <= 59))
+							if((GameIndex >= TILE_SOLID && GameIndex <= TILE_NOHOOK) || (GameIndex >= TILE_STOPL && GameIndex <= 59))
 							{
 								if(!pGameExtended)
 									pGameExtended = CreateCustomLayer(this, m_pGameLayer->m_Width, m_pGameLayer->m_Height, "#game", "_entities_race");
 								pGameLayer = pGameExtended;
 							}
-							pGameLayer->m_pTiles[i].m_Index = pTeleTiles[i].m_Type; 
+							pGameLayer->m_pTiles[i].m_Index = pTeleTiles[i].m_Type;
+							if(pGameLayer->m_pTiles[i].m_Index == TILE_TELEIN && s_TeleportVelReset)
+								pGameLayer->m_pTiles[i].m_Index = TILE_TELEIN_STOP;
 							pTele->m_pTiles[i].m_Index = pTeleTiles[i].m_Number;
 							NumTiles++;
 						}
@@ -859,7 +921,7 @@ int CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Storag
 						{
 							CLayerTiles *pGameLayer = m_pGameLayer;
 							int GameIndex = m_pGameLayer->m_pTiles[i].m_Index;
-							if((GameIndex >= TILE_SOLID && GameIndex <= TILE_NOHOOK) || (GameIndex >= TILE_TELEIN && GameIndex <= 59))
+							if((GameIndex >= TILE_SOLID && GameIndex <= TILE_NOHOOK) || (GameIndex >= TILE_TELEIN_STOP && GameIndex <= 59 && GameIndex != TILE_BOOST))
 							{
 								if(!pGameExtended)
 									pGameExtended = CreateCustomLayer(this, m_pGameLayer->m_Width, m_pGameLayer->m_Height, "#game", "_entities_race");

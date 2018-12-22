@@ -580,6 +580,14 @@ void CCharacter::TickDefered()
 	bool StuckAfterQuant = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
 	m_Pos = m_Core.m_Pos;
 
+	if(m_Core.m_TriggeredEvents&COREEVENTFLAG_TELEPORTED && g_Config.m_SvStrip)
+	{
+		if(m_ActiveWeapon >= WEAPON_SHOTGUN)
+			m_ActiveWeapon = WEAPON_HAMMER;
+		for(int i = WEAPON_SHOTGUN; i < NUM_WEAPONS; i++)
+			m_aWeapons[i].m_Got = false;
+	}
+
 	int TilePos = GameServer()->Collision()->CheckRaceTile(StartPos, m_Pos, CCollision::RACECHECK_TILES_MAIN);
 
 	CGameControllerRACE *pRace = GameServer()->RaceController();
@@ -823,7 +831,7 @@ void CCharacter::Snap(int SnappingClient)
 	pCharacter->m_AmmoCount = 0;
 	pCharacter->m_Health = 0;
 	pCharacter->m_Armor = 0;
-	pCharacter->m_TriggeredEvents = m_TriggeredEvents;
+	pCharacter->m_TriggeredEvents = m_TriggeredEvents&COREEVENTFLAG_MASK_VANILLA;
 
 	pCharacter->m_Weapon = m_ActiveWeapon;
 	pCharacter->m_AttackTick = m_AttackTick;

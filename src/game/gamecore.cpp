@@ -351,12 +351,12 @@ void CCharacterCore::Tick(bool UseInput)
 
 	// TODO: rework race physics
 	int Mask = 0;
-	if(m_pWorld->m_StopTiles) Mask |= CCollision::RACECHECK_TILES_STOP;
-	if(m_pWorld->m_Speedup) Mask |= CCollision::RACECHECK_SPEEDUP;
-	if(m_pWorld->m_Teleport) Mask |= CCollision::RACECHECK_TELE;
+	if(m_pWorld->m_PhysicsFlags&PHYSICSFLAG_STOPPER) Mask |= CCollision::RACECHECK_TILES_STOP;
+	if(m_pWorld->m_PhysicsFlags&PHYSICSFLAG_SPEEDUP) Mask |= CCollision::RACECHECK_SPEEDUP;
+	if(m_pWorld->m_PhysicsFlags&PHYSICSFLAG_TELEPORT) Mask |= CCollision::RACECHECK_TELE;
 	int TilePos = m_pCollision->CheckRaceTile(m_PrevPos, m_Pos, Mask);
 
-	if(m_pWorld->m_StopTiles)
+	if(m_pWorld->m_PhysicsFlags&PHYSICSFLAG_STOPPER)
 	{
 		if(m_pCollision->CheckIndexEx(TilePos, TILE_STOPL))
 		{
@@ -398,7 +398,7 @@ void CCharacterCore::Tick(bool UseInput)
 		}
 	}
 
-	if(m_pWorld->m_Speedup)
+	if(m_pWorld->m_PhysicsFlags&PHYSICSFLAG_SPEEDUP)
 	{
 		int SpeedupPos = m_pCollision->CheckSpeedup(TilePos);
 		if(m_LastSpeedup != SpeedupPos && SpeedupPos > -1)
@@ -411,7 +411,7 @@ void CCharacterCore::Tick(bool UseInput)
 		m_LastSpeedup = SpeedupPos;
 	}
 
-	if(m_pWorld->m_Teleport)
+	if(m_pWorld->m_PhysicsFlags&PHYSICSFLAG_TELEPORT)
 	{
 		bool Stop;
 		int Tele = m_pCollision->CheckTeleport(TilePos, &Stop);
@@ -425,7 +425,7 @@ void CCharacterCore::Tick(bool UseInput)
 			m_HookState = HOOK_RETRACTED;
 			m_Pos = m_pCollision->GetTeleportDestination(Tele);
 			m_HookPos = m_Pos;
-			//m_Teleported = true;
+			m_TriggeredEvents |= COREEVENTFLAG_TELEPORTED;
 
 			if(Stop)
 				m_Vel = vec2(0,0);

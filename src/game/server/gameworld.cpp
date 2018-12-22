@@ -11,7 +11,7 @@
 //////////////////////////////////////////////////
 // game world
 //////////////////////////////////////////////////
-CGameWorld::CGameWorld() : m_Core(true)
+CGameWorld::CGameWorld() : m_Core(PHYSICSFLAG_RACE_ALL)
 {
 	m_pGameServer = 0x0;
 	m_pServer = 0x0;

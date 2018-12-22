@@ -130,23 +130,31 @@ enum
 	HOOK_GRABBED,
 };
 
+enum
+{
+	PHYSICSFLAG_STOPPER=1,
+	PHYSICSFLAG_TELEPORT=2,
+	PHYSICSFLAG_SPEEDUP=4,
+
+	PHYSICSFLAG_RACE_ALL=PHYSICSFLAG_STOPPER|PHYSICSFLAG_TELEPORT|PHYSICSFLAG_SPEEDUP,
+
+	COREEVENTFLAG_TELEPORTED=1<<16,
+	COREEVENTFLAG_MASK_VANILLA=0xffff
+};
+
 class CWorldCore
 {
 public:
-	CWorldCore(bool Race = false)
+	CWorldCore(int PhysicsFlags = 0)
 	{
 		mem_zero(m_apCharacters, sizeof(m_apCharacters));
-		m_Teleport = Race;
-		m_Speedup = Race;
-		m_StopTiles = Race;
+		m_PhysicsFlags = PhysicsFlags;
 	}
 
 	CTuningParams m_Tuning;
 	class CCharacterCore *m_apCharacters[MAX_CLIENTS];
 
-	bool m_Teleport;
-	bool m_Speedup;
-	bool m_StopTiles;
+	int m_PhysicsFlags;
 };
 
 class CCharacterCore

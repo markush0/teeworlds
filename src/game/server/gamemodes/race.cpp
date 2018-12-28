@@ -180,7 +180,7 @@ void CGameControllerRACE::OnPhysicsStep(int ID, vec2 Pos, float IntraTick)
 	else if(CanEndRace(ID) && IsEnd(Pos, Team))
 	{
 		m_aRace[ID].m_AddTime += IntraTime;
-		OnRaceEnd(ID, GetTime(ID));
+		OnRaceEnd(ID, GetTimeExact(ID));
 	}
 }
 
@@ -204,5 +204,10 @@ void CGameControllerRACE::ResetPickups(int ClientID)
 
 int CGameControllerRACE::GetTime(int ID) const
 {
-	return (Server()->Tick() - m_aRace[ID].m_StartTick) * 1000 / Server()->TickSpeed() + round_to_int(m_aRace[ID].m_AddTime);
+	return (Server()->Tick() - m_aRace[ID].m_StartTick) * 1000 / Server()->TickSpeed();
+}
+
+int CGameControllerRACE::GetTimeExact(int ID) const
+{
+	return GetTime(ID) + round_to_int(m_aRace[ID].m_AddTime);
 }

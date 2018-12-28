@@ -11,6 +11,7 @@ class CGameControllerRACE : public IGameController
 	void OnCheckpoint(int ID, int z);
 
 	int GetTime(int ID) const;
+	int GetTimeExact(int ID) const;
 
 protected:
 	struct CRaceData

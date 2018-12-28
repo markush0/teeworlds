@@ -878,6 +878,8 @@ int CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Storag
 				{
 					CTeleTile *pTeleTiles = (CTeleTile *)DataFile.GetData(Tele);
 					int NumTiles = 0;
+					bool aTeleporterIn[1<<8] = {0};
+					bool aTeleporterOut[1<<8] = {0};
 
 					for(int i = 0; i < m_pGameLayer->m_Width*m_pGameLayer->m_Height; i++)
 					{
@@ -896,6 +898,10 @@ int CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Storag
 								pGameLayer->m_pTiles[i].m_Index = TILE_TELEIN_STOP;
 							pTele->m_pTiles[i].m_Index = pTeleTiles[i].m_Number;
 							NumTiles++;
+							if(pTeleTiles[i].m_Type == TILE_TELEIN)
+								aTeleporterIn[pTeleTiles[i].m_Number] = true;
+							if(pTeleTiles[i].m_Type == TILE_TELEOUT)
+								aTeleporterOut[pTeleTiles[i].m_Number] = true;
 						}
 					}
 
@@ -904,6 +910,10 @@ int CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Storag
 						delete pTele;
 						pTele = 0;
 					}
+
+					for(int i = 1; i < 1<<8; i++)
+						if(aTeleporterIn[i] != aTeleporterOut[i])
+							dbg_msg("race", "warning: missing %s for tele #%d", aTeleporterIn[i] ? "out" : "in", i);
 
 					DataFile.UnloadData(Tele);
 				}

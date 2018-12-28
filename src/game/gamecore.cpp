@@ -82,8 +82,6 @@ void CCharacterCore::Tick(bool UseInput)
 	float PhysSize = 28.0f;
 	m_TriggeredEvents = 0;
 
-	int Jumped = m_Jumped;
-
 	// get ground state
 	bool Grounded = false;
 	if(m_pCollision->CheckPoint(m_Pos.x+PhysSize/2, m_Pos.y+PhysSize/2+5))

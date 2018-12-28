@@ -130,6 +130,12 @@ MACRO_CONFIG_INT(SvVoteKickMin, sv_vote_kick_min, 0, 0, MAX_CLIENTS, CFGFLAG_SAV
 MACRO_CONFIG_INT(SvVoteKickBantime, sv_vote_kick_bantime, 5, 0, 1440, CFGFLAG_SAVE|CFGFLAG_SERVER, "The time to ban a player if kicked by vote. 0 makes it just use kick")
 
 // race
+MACRO_CONFIG_INT(ClPredictRace, cl_predict_race, 1, 0, 1, CFGFLAG_CLIENT|CFGFLAG_SAVE, "Predict race")
+MACRO_CONFIG_INT(ClPredictTeleport, cl_predict_teleport, 1, 0, 1, CFGFLAG_CLIENT|CFGFLAG_SAVE, "Predict teleport")
+MACRO_CONFIG_INT(ClPredictSpeedup, cl_predict_speedup, 1, 0, 1, CFGFLAG_CLIENT|CFGFLAG_SAVE, "Predict speedup")
+MACRO_CONFIG_INT(ClPredictStopTiles, cl_predict_stop_tiles, 1, 0, 1, CFGFLAG_CLIENT|CFGFLAG_SAVE, "Predict stop tiles")
+
+// map settings
 MACRO_CONFIG_INT(SvRegen, sv_regen, 0, 0, 50, CFGFLAG_MAPSETTINGS, "Set regeneration")
 MACRO_CONFIG_INT(SvStrip, sv_strip, 0, 0, 1, CFGFLAG_MAPSETTINGS, "Enable or disable keeping weapon after teleporting")
 MACRO_CONFIG_INT(SvInfiniteAmmo, sv_infinite_ammo, 0, 0, 1, CFGFLAG_MAPSETTINGS, "Enable or disable infinite ammo")

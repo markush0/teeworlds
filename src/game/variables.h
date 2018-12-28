@@ -144,6 +144,7 @@ MACRO_CONFIG_INT(SvTeleportGrenade, sv_teleport_grenade, 0, 0, 1, CFGFLAG_MAPSET
 MACRO_CONFIG_INT(SvDeleteGrenadesAfterDeath, sv_delete_grenades_after_death, 1, 0, 1, CFGFLAG_MAPSETTINGS, "Delete grenades after the player dies")
 MACRO_CONFIG_INT(SvRocketJumpDamage, sv_rocket_jump_damage, 1, 0, 1, CFGFLAG_MAPSETTINGS, "Enable or disable rocket jump damage")
 MACRO_CONFIG_INT(SvPickupRespawn, sv_pickup_respawn, -1, -1, 120, CFGFLAG_MAPSETTINGS, "Time before a pickup respawn")
+MACRO_CONFIG_INT(SvAllowRestartOld, sv_allow_restart_old, 0, 0, 1, CFGFLAG_MAPSETTINGS, "Allow restarting the race when the character has no armor and no grenades (deprecated)")
 
 //MACRO_CONFIG_INT(SvScoreIP, sv_score_ip, 1, 0, 1, CFGFLAG_SERVER, "Check score for ip, too")
 MACRO_CONFIG_INT(SvLoadBest, sv_load_best, 1, 0, 1, CFGFLAG_SERVER, "Loads the best time from scoring")

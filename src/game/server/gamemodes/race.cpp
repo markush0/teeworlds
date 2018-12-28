@@ -187,7 +187,8 @@ void CGameControllerRACE::OnPhysicsStep(int ID, vec2 Pos, float IntraTick)
 bool CGameControllerRACE::CanStartRace(int ID) const
 {
 	CCharacter *pChr = GameServer()->GetPlayerChar(ID);
-	return (m_aRace[ID].m_RaceState == RACE_NONE || (!pChr->HasWeapon(WEAPON_GRENADE) && !pChr->Armor())) && GameServer()->IsPureTuning();
+	bool AllowRestart = g_Config.m_SvAllowRestartOld && !pChr->HasWeapon(WEAPON_GRENADE) && !pChr->Armor();
+	return (m_aRace[ID].m_RaceState == RACE_NONE || AllowRestart) && GameServer()->IsPureTuning();
 }
 
 bool CGameControllerRACE::CanEndRace(int ID) const

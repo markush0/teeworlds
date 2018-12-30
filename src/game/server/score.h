@@ -57,6 +57,7 @@ class IScore
 protected:
 	CPlayerData m_aPlayerData[MAX_CLIENTS];
 	int m_CurrentRecord;
+	int m_LastPrintInChat[MAX_CLIENTS];
 	
 public:
 	IScore() { m_CurrentRecord = 0; }

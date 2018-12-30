@@ -24,7 +24,6 @@ CFileScore::CPlayerScore::CPlayerScore(const char *pName, int Time, int *pCpTime
 CFileScore::CFileScore(CGameContext *pGameServer) : m_pGameServer(pGameServer), m_pServer(pGameServer->Server())
 {
 	m_aMap[0] = 0;
-	mem_zero(m_LastPrintInChat, sizeof(m_LastPrintInChat));
 
 	if(gs_ScoreLock == 0)
 		gs_ScoreLock = lock_create();
@@ -184,6 +183,7 @@ void CFileScore::OnMapLoad()
 	// save the current best score
 	if(m_lTop.size())
 		UpdateRecord(m_lTop[0].m_Time);
+	mem_zero(m_LastPrintInChat, sizeof(m_LastPrintInChat));
 }
 
 CFileScore::CPlayerScore *CFileScore::SearchScoreByID(int ID, int *pPosition)
@@ -293,14 +293,14 @@ void CFileScore::ShowTop5(int ClientID, int Debut)
 {
 	char aBuf[512];
 	char aTime[64];
-	PrintInChat(ClientID, CHAT_ALL, ClientID, "----------- Top 5 -----------");
+	PrintInChat(ClientID, CHAT_ALL, ClientID, "----------- Top 5 -----------", true);
 	for(int i = 0; i < 5 && i + Debut - 1 < m_lTop.size(); i++)
 	{
 		const CPlayerScore *r = &m_lTop[i+Debut-1];
 		IRace::FormatTimeLong(aTime, sizeof(aTime), r->m_Time);
 		str_format(aBuf, sizeof(aBuf), "%d. %s Time: %s",
 			i + Debut, r->m_aName, aTime);
-		PrintInChat(ClientID, CHAT_ALL, ClientID, aBuf);
+		PrintInChat(ClientID, CHAT_ALL, ClientID, aBuf, true);
 	}
 	PrintInChat(ClientID, CHAT_ALL, ClientID, "------------------------------");
 }
@@ -357,12 +357,13 @@ void CFileScore::ShowRank(int ClientID)
 	PrintInChat(ClientID, CHAT_ALL, To, aBuf);
 }
 
-void CFileScore::PrintInChat(int From, int Mode, int To, const char *pText)
+void CFileScore::PrintInChat(int From, int Mode, int To, const char *pText, bool IsBlock)
 {
 	// 3 seconds cooldown for chat commands
 	if(g_Config.m_SvSpamprotection && m_LastPrintInChat[From] && m_LastPrintInChat[From]+Server()->TickSpeed()*3 > Server()->Tick())	
 		return;
 
 	GameServer()->SendChat(-1, Mode, To, pText);
-	m_LastPrintInChat[From] = Server()->Tick();
+	if(IsBlock)
+		m_LastPrintInChat[From] = Server()->Tick();
 }

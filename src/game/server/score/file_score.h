@@ -41,7 +41,6 @@ class CFileScore : public IScore
 	
 	sorted_array<CPlayerScore> m_lTop;
 	array<CScoreJob> m_lJobQueue;
-	int m_LastPrintInChat[MAX_CLIENTS];
 
 	char m_aMap[64];
 	
@@ -57,7 +56,7 @@ class CFileScore : public IScore
 	void WriteEntry(IOHANDLE File, const CPlayerScore *pEntry) const;
 	IOHANDLE OpenFile(int Flags) const;
 	
-	void PrintInChat(int ChatterClientID, int Mode, int To, const char *pText);
+	void PrintInChat(int From, int Mode, int To, const char *pText, bool IsBlock = true);
 
 public:
 	CFileScore(CGameContext *pGameServer);

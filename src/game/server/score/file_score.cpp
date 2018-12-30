@@ -183,7 +183,6 @@ void CFileScore::OnMapLoad()
 	// save the current best score
 	if(m_lTop.size())
 		UpdateRecord(m_lTop[0].m_Time);
-	mem_zero(m_LastPrintInChat, sizeof(m_LastPrintInChat));
 }
 
 CFileScore::CPlayerScore *CFileScore::SearchScoreByID(int ID, int *pPosition)

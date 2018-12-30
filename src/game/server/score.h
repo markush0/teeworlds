@@ -79,6 +79,7 @@ public:
 		m_CurrentRecord = 0;
 		for(int i = 0; i < MAX_CLIENTS; i++)
 			m_aPlayerData[i].Reset();
+		mem_zero(m_LastPrintInChat, sizeof(m_LastPrintInChat));
 	}
 
 	virtual void Tick() { }

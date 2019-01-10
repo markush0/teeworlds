@@ -321,10 +321,10 @@ float CScoreboard::RenderScoreboard(float x, float y, float w, int Team, const c
 
 	TextRender()->TextColor(1.0f, 1.0f, 1.0f, 0.5f);
 	tw = TextRender()->TextWidth(0, HeadlineFontsize, "K", -1);
-	TextRender()->Text(0, KillOffset+KillLength/2-tw/2, y+Spacing, HeadlineFontsize, Localize("K"), -1);
+	TextRender()->Text(0, KillOffset+KillLength/2-tw/2, y+Spacing, HeadlineFontsize, "K", -1);
 
 	tw = TextRender()->TextWidth(0, HeadlineFontsize, "D", -1);
-	TextRender()->Text(0, DeathOffset+DeathLength/2-tw/2, y+Spacing, HeadlineFontsize, Localize("D"), -1);
+	TextRender()->Text(0, DeathOffset+DeathLength/2-tw/2, y+Spacing, HeadlineFontsize, "D", -1);
 
 	TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1.0f);
 	tw = TextRender()->TextWidth(0, HeadlineFontsize, Localize("Score"), -1);
@@ -637,17 +637,16 @@ void CScoreboard::OnRender()
 	else if(m_SkipPlayerStatsReset && m_pClient->m_Snap.m_pGameData && m_pClient->m_Snap.m_pGameData->m_GameStartTick != Client()->GameTick())
 		m_SkipPlayerStatsReset = false;
 
+	// close the motd if we actively wanna look on the scoreboard
+	if(m_Active)
+		m_pClient->m_pMotd->Clear();
+
 	if(!Active())
 		return;
 
-	// don't render scoreboard if menu is open
-	if(m_pClient->m_pMenus->IsActive())
+	// don't render scoreboard if menu or motd is open
+	if(m_pClient->m_pMenus->IsActive() || m_pClient->m_pMotd->IsActive())
 		return;
-
-	// if the score board is active, then we should clear the motd message aswell
-	if(m_pClient->m_pMotd->IsActive())
-		m_pClient->m_pMotd->Clear();
-
 
 	CUIRect Screen = *UI()->Screen();
 	Graphics()->MapScreen(Screen.x, Screen.y, Screen.w, Screen.h);

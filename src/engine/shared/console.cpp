@@ -426,6 +426,7 @@ void CConsole::ExecuteFile(const char *pFilename)
 	{
 		str_format(aBuf, sizeof(aBuf), "failed to open '%s'", pFilename);
 		Print(IConsole::OUTPUT_LEVEL_STANDARD, "console", aBuf);
+		Print(IConsole::OUTPUT_LEVEL_STANDARD, "console", "Info: only relative paths starting from the ones you specify in 'storage.cfg' are allowed");
 	}
 
 	m_pFirstExec = pPrev;
@@ -552,7 +553,7 @@ static void StrVariableCommand(IConsole::IResult *pResult, void *pUserData)
 			int Length = 0;
 			while(*pString)
 			{
-				int Size = str_utf8_encode(Temp, static_cast<const unsigned char>(*pString++));
+				int Size = str_utf8_encode(Temp, static_cast<unsigned char>(*pString++));
 				if(Length+Size < pData->m_MaxSize)
 				{
 					mem_copy(pData->m_pStr+Length, &Temp, Size);

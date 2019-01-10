@@ -6,7 +6,8 @@
 #include <base/tl/threading.h>
 
 #include <base/system.h>
-#include <engine/external/pnglite/pnglite.h>
+
+#include <pnglite.h>
 
 #include <engine/shared/config.h>
 #include <engine/graphics.h>
@@ -373,9 +374,6 @@ IGraphics::CTextureHandle CGraphics_Threaded::LoadTextureRaw(int Width, int Heig
 
 	//
 	m_pCommandBuffer->AddCommand(Cmd);
-	// kick the buffer and wait for the result
-	KickCommandBuffer();
-	WaitForIdle();
 
 	return CreateTextureHandle(Tex);
 }

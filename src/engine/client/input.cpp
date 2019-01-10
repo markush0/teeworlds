@@ -4,6 +4,7 @@
 
 #include <base/system.h>
 #include <engine/shared/config.h>
+#include <engine/console.h>
 #include <engine/graphics.h>
 #include <engine/input.h>
 #include <engine/keys.h>
@@ -39,8 +40,7 @@ CInput::CInput()
 	m_InputCounter = 1;
 	m_InputGrabbed = 0;
 
-	m_LastRelease = 0;
-	m_ReleaseDelta = -1;
+	m_MouseDoubleClick = false;
 
 	m_NumEvents = 0;
 }
@@ -48,6 +48,7 @@ CInput::CInput()
 void CInput::Init()
 {
 	m_pGraphics = Kernel()->RequestInterface<IEngineGraphics>();
+	m_pConsole = Kernel()->RequestInterface<IConsole>();
 	// FIXME: unicode handling: use SDL_StartTextInput/SDL_StopTextInput on inputs
 
 	MouseModeRelative();
@@ -83,6 +84,10 @@ void CInput::MouseModeRelative()
 	{
 		m_InputGrabbed = 1;
 		SDL_ShowCursor(SDL_DISABLE);
+		if(SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, g_Config.m_InpGrab ? "0" : "1", SDL_HINT_OVERRIDE) == SDL_FALSE)
+		{
+			m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "input", "unable to switch relative mouse mode");
+		}
 		SDL_SetRelativeMouseMode(SDL_TRUE);
 		SDL_GetRelativeMouseState(NULL, NULL);
 	}
@@ -90,10 +95,9 @@ void CInput::MouseModeRelative()
 
 int CInput::MouseDoubleClick()
 {
-	if(m_ReleaseDelta >= 0 && m_ReleaseDelta < (time_freq() >> 2))
+	if(m_MouseDoubleClick)
 	{
-		m_LastRelease = 0;
-		m_ReleaseDelta = -1;
+		m_MouseDoubleClick = false;
 		return 1;
 	}
 	return 0;
@@ -165,12 +169,6 @@ int CInput::Update()
 				case SDL_MOUSEBUTTONUP:
 					Action = IInput::FLAG_RELEASE;
 
-					if(Event.button.button == 1) // ignore_convention
-					{
-						m_ReleaseDelta = time_get() - m_LastRelease;
-						m_LastRelease = time_get();
-					}
-
 					// fall through
 				case SDL_MOUSEBUTTONDOWN:
 					if(Event.button.button == SDL_BUTTON_LEFT) Key = KEY_MOUSE_1; // ignore_convention
@@ -182,6 +180,8 @@ int CInput::Update()
 					if(Event.button.button == 7) Key = KEY_MOUSE_7; // ignore_convention
 					if(Event.button.button == 8) Key = KEY_MOUSE_8; // ignore_convention
 					if(Event.button.button == 9) Key = KEY_MOUSE_9; // ignore_convention
+					if(Event.button.clicks%2 == 0 && Event.button.button == SDL_BUTTON_LEFT)
+						m_MouseDoubleClick = true;
 					Scancode = Key;
 					break;
 

@@ -6,11 +6,11 @@
 class CInput : public IEngineInput
 {
 	IEngineGraphics *m_pGraphics;
+	IConsole *m_pConsole;
 
 	int m_InputGrabbed;
 
-	int64 m_LastRelease;
-	int64 m_ReleaseDelta;
+	bool m_MouseDoubleClick;
 
 	void AddEvent(char *pText, int Key, int Flags);
 	void Clear();

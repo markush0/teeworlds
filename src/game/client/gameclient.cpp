@@ -1249,8 +1249,19 @@ void CGameClient::OnPredict()
 		return;
 	}
 
+	int PhysicsFlags = 0;
+	if(g_Config.m_ClPredictRace) // TODO: only on race servers
+	{
+		if(g_Config.m_ClPredictTeleport)
+			PhysicsFlags |= PHYSICSFLAG_TELEPORT;
+		if(g_Config.m_ClPredictSpeedup)
+			PhysicsFlags |= PHYSICSFLAG_SPEEDUP;
+		if(g_Config.m_ClPredictStopTiles)
+			PhysicsFlags |= PHYSICSFLAG_STOPPER;
+	}
+
 	// repredict character
-	CWorldCore World;
+	CWorldCore World(PhysicsFlags);
 	World.m_Tuning = m_Tuning;
 
 	// search for players

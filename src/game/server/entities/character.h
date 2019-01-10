@@ -58,6 +58,12 @@ public:
 	bool IsAlive() const { return m_Alive; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
 
+	void SetActiveWeapon(int Weapon) { m_ActiveWeapon = Weapon; }
+	bool HasWeapon(int Weapon) const { return m_aWeapons[Weapon].m_Got; }
+	int Armor() const { return m_Armor; }
+
+	static void OnPhysicsStep(vec2 Pos, float IntraTick, void *pUserData);
+
 private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;

@@ -1,5 +1,7 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
+#include <game/gamecore.h> // StrToInts, IntsToStr
+
 #include "layers.h"
 
 CLayers::CLayers()
@@ -10,11 +12,22 @@ CLayers::CLayers()
 	m_LayersStart = 0;
 	m_pGameGroup = 0;
 	m_pGameLayer = 0;
+	m_pGameExLayer = 0;
+	m_pSettingsLayer = 0;
+	m_pTeleLayer = 0;
+	m_pSpeedupForceLayer = 0;
+	m_pSpeedupAngleLayer = 0;
 	m_pMap = 0;
 }
 
 void CLayers::Init(class IKernel *pKernel, IMap *pMap)
 {
+	m_pGameExLayer = 0;
+	m_pSettingsLayer = 0;
+	m_pTeleLayer = 0;
+	m_pSpeedupForceLayer = 0;
+	m_pSpeedupAngleLayer = 0;
+
 	m_pMap = pMap ? pMap : pKernel->RequestInterface<IMap>();
 	m_pMap->GetType(MAPITEMTYPE_GROUP, &m_GroupsStart, &m_GroupsNum);
 	m_pMap->GetType(MAPITEMTYPE_LAYER, &m_LayersStart, &m_LayersNum);
@@ -28,7 +41,10 @@ void CLayers::Init(class IKernel *pKernel, IMap *pMap)
 
 			if(pLayer->m_Type == LAYERTYPE_TILES)
 			{
+				char aName[12];
 				CMapItemLayerTilemap *pTilemap = reinterpret_cast<CMapItemLayerTilemap *>(pLayer);
+				IntsToStr(pTilemap->m_aName, sizeof(aName)/sizeof(int), aName);
+
 				if(pTilemap->m_Flags&TILESLAYERFLAG_GAME)
 				{
 					m_pGameLayer = pTilemap;
@@ -49,8 +65,18 @@ void CLayers::Init(class IKernel *pKernel, IMap *pMap)
 						m_pGameGroup->m_ClipH = 0;
 					}
 
-					break;
+					//break;
 				}
+				else if(str_comp(aName, "#game") == 0)
+					m_pGameExLayer = pTilemap;
+				else if(str_comp(aName, "#settings") == 0)
+					m_pSettingsLayer = pTilemap;
+				else if(str_comp(aName, "#tele") == 0)
+					m_pTeleLayer = pTilemap;
+				else if(str_comp(aName, "#spu-force") == 0)
+					m_pSpeedupForceLayer = pTilemap;
+				else if(str_comp(aName, "#spu-angle") == 0)
+					m_pSpeedupAngleLayer = pTilemap;
 			}
 		}
 	}

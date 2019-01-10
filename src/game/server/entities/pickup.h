@@ -17,9 +17,11 @@ public:
 	virtual void TickPaused();
 	virtual void Snap(int SnappingClient);
 
+	void Respawn(int ClientID) { m_SpawnTick[ClientID] = -1; }
+
 private:
 	int m_Type;
-	int m_SpawnTick;
+	int m_SpawnTick[MAX_CLIENTS];
 };
 
 #endif

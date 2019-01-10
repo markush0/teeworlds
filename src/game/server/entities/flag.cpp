@@ -2,6 +2,9 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <game/server/gamecontext.h>
 #include <game/server/gamecontroller.h>
+#include <game/server/player.h>
+
+#include "../gamemodes/race.h"
 
 #include "character.h"
 #include "flag.h"
@@ -86,7 +89,12 @@ void CFlag::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient))
 		return;
 
-	CNetObj_Flag *pFlag = (CNetObj_Flag *)Server()->SnapNewItem(NETOBJTYPE_FLAG, m_Team, sizeof(CNetObj_Flag));
+	if((!m_pCarrier && SnappingClient != -1 && GameServer()->m_apPlayers[SnappingClient]->GetTeam() != m_Team &&
+		GameServer()->RaceController()->GetRaceState(SnappingClient) == CGameControllerRACE::RACE_STARTED) ||
+		(m_pCarrier && !CheckShowOthers(SnappingClient, m_pCarrier->GetPlayer()->GetCID())))
+		return;
+
+	CNetObj_Flag *pFlag = (CNetObj_Flag *)Server()->SnapNewItem(NETOBJTYPE_FLAG, GetID(), sizeof(CNetObj_Flag));
 	if(!pFlag)
 		return;
 

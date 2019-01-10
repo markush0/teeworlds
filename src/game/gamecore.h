@@ -130,16 +130,25 @@ enum
 	HOOK_GRABBED,
 };
 
+enum
+{
+	COREEVENTFLAG_TELEPORTED=1<<16,
+	COREEVENTFLAG_MASK_VANILLA=0xffff
+};
+
 class CWorldCore
 {
 public:
-	CWorldCore()
+	CWorldCore(int PhysicsFlags = 0)
 	{
 		mem_zero(m_apCharacters, sizeof(m_apCharacters));
+		m_PhysicsFlags = PhysicsFlags;
 	}
 
 	CTuningParams m_Tuning;
 	class CCharacterCore *m_apCharacters[MAX_CLIENTS];
+
+	int m_PhysicsFlags;
 };
 
 class CCharacterCore
@@ -163,6 +172,8 @@ public:
 	CNetObj_PlayerInput m_Input;
 
 	int m_TriggeredEvents;
+
+	CCollisionData m_Race;
 
 	void Init(CWorldCore *pWorld, CCollision *pCollision);
 	void Reset();

@@ -13,6 +13,7 @@ public:
 
 	virtual void Init(int FlagMask) = 0;
 	virtual void Reset() = 0;
+	virtual void Reset(int FilterFlags) = 0;
 	virtual void RestoreStrings() = 0;
 	virtual void Save(const char *pFilename=0) = 0;
 

@@ -1,5 +1,6 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
+#include "mapitems.h"
 #include "gamecore.h"
 
 const char *CTuningParams::m_apNames[] =
@@ -59,6 +60,7 @@ void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision)
 {
 	m_pWorld = pWorld;
 	m_pCollision = pCollision;
+	m_Race.m_PhysicsFlags = m_pWorld->m_PhysicsFlags;
 }
 
 void CCharacterCore::Reset()
@@ -72,6 +74,7 @@ void CCharacterCore::Reset()
 	m_HookedPlayer = -1;
 	m_Jumped = 0;
 	m_TriggeredEvents = 0;
+	m_Race.m_LastSpeedupTilePos = ivec2(-1,-1);
 }
 
 void CCharacterCore::Tick(bool UseInput)
@@ -355,7 +358,16 @@ void CCharacterCore::Move()
 	m_Vel.x = m_Vel.x*RampValue;
 
 	vec2 NewPos = m_Pos;
-	m_pCollision->MoveBox(&NewPos, &m_Vel, vec2(28.0f, 28.0f), 0);
+	m_Race.m_Teleported = 0;
+	m_pCollision->MoveBox(&NewPos, &m_Vel, vec2(28.0f, 28.0f), 0, &m_Race);
+
+	if(m_Race.m_Teleported)
+	{
+		m_HookedPlayer = -1;
+		m_HookState = HOOK_RETRACTED;
+		m_HookPos = m_Pos;
+		m_TriggeredEvents |= COREEVENTFLAG_TELEPORTED;
+	}
 
 	m_Vel.x = m_Vel.x*(1.0f/RampValue);
 

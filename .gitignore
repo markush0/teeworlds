@@ -50,3 +50,9 @@ cmake_install.cmake
 install_manifest.txt
 pack_*/
 rules.ninja
+/SDL2.lib
+/SDL*.lib
+/freetype.lib
+/log.txt
+/settings.json
+/.vs

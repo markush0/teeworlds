@@ -296,6 +296,8 @@ void CFileScore::ShowTop5(int ClientID, int Debut)
 	char aBuf[512];
 	char aTime[64];
 	GameServer()->SendChat(-1, CHAT_ALL, ClientID, "----------- Top 5 -----------");
+	str_format(aBuf, sizeof(aBuf), "Record(s): %d", m_lTop.size());
+	GameServer()->SendChat(-1, CHAT_ALL, ClientID, aBuf);
 	for(int i = 0; i < 5 && i + Debut - 1 < m_lTop.size(); i++)
 	{
 		const CPlayerScore *r = &m_lTop[i+Debut-1];

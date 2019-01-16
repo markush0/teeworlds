@@ -838,11 +838,11 @@ int CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Storag
 				static CIntVariableData s_aVars[] = {
 					{ m_pConsole, "sv_regen", &s_aValues[0], 0, 0, 50 },
 					{ m_pConsole, "sv_strip", &s_aValues[1], 0, 0, 1 },
-					{ m_pConsole, "sv_infinite_ammo", &s_aValues[2], 0, 0, 1 },
+					{ m_pConsole, "sv_infinite_ammo", &s_aValues[2], 	, 0, 1 },
 					{ m_pConsole, "sv_no_items", &s_aValues[3], 0, 0, 1 },
 					{ m_pConsole, "sv_teleport_grenade", &s_aValues[4], 0, 0, 1 },
-					{ m_pConsole, "sv_delete_grenades_after_death", &s_aValues[5], 1, 0, 1 },
-					{ m_pConsole, "sv_rocket_jump_damage", &s_aValues[6], 1, 0, 1 },
+					{ m_pConsole, "sv_delete_grenades_after_death", &s_aValues[5], 0, 0, 1 },
+					{ m_pConsole, "sv_rocket_jump_damage", &s_aValues[6], 0, 0, 1 },
 					{ m_pConsole, "sv_pickup_respawn", &s_aValues[7], -1, -1, 120 },
 					{ m_pConsole, "sv_allow_restart_old", &s_aValues[8], 0, 0, 1 }
 				};
